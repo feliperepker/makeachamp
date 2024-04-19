@@ -1,19 +1,19 @@
 import { FaGoogle } from "react-icons/fa";
-import { AuthContextProvider } from "./contexts/AuthContext";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import { api } from "./services/api";
+import { useAuth } from "./hooks/useAuth";
 
 function App() {
   return (
     <GoogleOAuthProvider clientId="854730911868-31nrd8uu3jm0n2a365fguumugu60oeek.apps.googleusercontent.com">
-      <AuthContextProvider>
-        <AppContent />
-      </AuthContextProvider>
+      <AppContent />
     </GoogleOAuthProvider>
   );
 }
 
 function AppContent() {
+  const { userInfos, changeUser } = useAuth();
+
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       const response = await api.post("/users", {
@@ -22,13 +22,14 @@ function AppContent() {
       api.defaults.headers.common[
         "Authorization"
       ] = `Bearer ${response.data.token}`;
-      console.log(response.data);
-      // const userInfoResponse = await api.get("/me");
-      // localStorage.setItem(
-      //   "user-cubetimer",
-      //   JSON.stringify(userInfoResponse.data.user)
-      // );
-      // localStorage.setItem("token-cubetimer", response.data.token);
+      console.log(response.data.token);
+      const userInfoResponse = await api.get("/me");
+      let user = {
+        name: userInfoResponse.data.nome,
+        avatar: userInfoResponse.data.avatar,
+        token: response.data.token,
+      };
+      changeUser(user);
     },
   });
 
@@ -40,6 +41,13 @@ function AppContent() {
       >
         <FaGoogle />
         Sign in with Google
+      </button>
+      <button
+        onClick={() => {
+          console.log(userInfos);
+        }}
+      >
+        aaaaaaaaa
       </button>
     </div>
   );

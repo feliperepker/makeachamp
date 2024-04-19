@@ -1,45 +1,44 @@
-"use client";
-import { ReactNode, createContext } from "react";
-import { useGoogleLogin } from "@react-oauth/google";
-import { api } from "../services/api";
+import React, { createContext, useState, ReactNode } from "react";
 
-export interface AuthContextDataProps {
-  signIn: () => Promise<void>;
+interface AuthContextType {
+  userInfos: UserInfos;
+  changeUser: (newUser: UserInfos) => void;
 }
+
+interface UserInfos {
+  name: string;
+  avatar: string;
+  token: string;
+}
+
+export const AuthContext = createContext<AuthContextType>({
+  userInfos: { name: "", avatar: "", token: "" },
+  changeUser: () => {},
+});
+
 interface AuthProviderProps {
   children: ReactNode;
 }
-export const AuthContext = createContext({} as AuthContextDataProps);
 
-export function AuthContextProvider({ children }: AuthProviderProps) {
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      const response = await api.post("/users", {
-        access_token: tokenResponse.access_token,
-      });
-      api.defaults.headers.common[
-        "Authorization"
-      ] = `Bearer ${response.data.token}`;
-      const userInfoResponse = await api.get("/me");
-      localStorage.setItem(
-        "user-cubetimer",
-        JSON.stringify(userInfoResponse.data.user)
-      );
-      localStorage.setItem("token-cubetimer", response.data.token);
-    },
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [userInfos, setUserInfos] = useState<UserInfos>({
+    name: "",
+    avatar: "",
+    token: "",
   });
 
-  async function signIn() {
-    login();
-  }
+  const changeUser = (newUser: UserInfos) => {
+    console.log("oi");
+    console.log(newUser);
+    setUserInfos(newUser);
+  };
+
+  const contextValue: AuthContextType = {
+    userInfos,
+    changeUser,
+  };
 
   return (
-    <AuthContext.Provider
-      value={{
-        signIn,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
-}
+};
