@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  googleId     String   @unique
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  teams        Team[]   @relation("TeamParticipants")
+  teamsThatOwn Team[]   @relation("TeamOwner")
+}
+
+model Team {
+  id           String  @id @default(cuid())
+  name         String
+  ownerId      String?
+  participants User[]  @relation("TeamParticipants")
+  champs       Champ[]
+  owner        User?   @relation("TeamOwner", fields: [ownerId], references: [id])
+  matches      Match[]
+}
+
+model Champ {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  ownerId   String
+  teams     Team[]
+  steps     Step[]
+}
+
+model Step {
+  id      String  @id @default(cuid())
+  name    String
+  champId String?
+  Champ   Champ?  @relation(fields: [champId], references: [id])
+}
+
+model Match {
+  id         String   @id @default(cuid())
+  winner     String
+  teams      Team[]
+  dateToPlay DateTime
+}
